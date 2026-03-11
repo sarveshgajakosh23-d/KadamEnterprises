@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kadam Enterprises - POS V2.3</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --p: #1a237e; --s: #303f9f; --acc: #ffd600; --bg: #f0f2f5; --success: #2e7d32; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
+        .nav { background: var(--p); color: white; display: flex; justify-content: space-around; padding: 12px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .nav-item { cursor: pointer; text-align: center; font-size: 11px; }
+        .container { padding: 12px; max-width: 800px; margin: auto; padding-bottom: 80px; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; background: white; }
+        th, td { border: 1px solid #eee; padding: 8px; text-align: left; font-size: 13px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
+        .btn-save { background: var(--success); } .btn-print { background: #0288d1; } .btn-del { background: #d32f2f; padding: 5px; }
+        
+        #thermal-bill { width: 80mm; padding: 4mm; background: white; font-family: 'Courier New', monospace; font-size: 12px; color: black; display: none; }
+        #thermal-bill table { border: none; width: 100% !important; }
+        #thermal-bill th, #thermal-bill td { border-bottom: 1px dashed #ccc; padding: 4px 0; border:none; }
+
+        @media print { .no-print { display: none !important; } #thermal-bill { display: block !important; width: 80mm; position: absolute; left: 0; top: 0; } }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 2000; overflow-y: auto; }
+        .modal-content { background: white; margin: 15px auto; padding: 15px; width: 90%; max-width: 380px; border-radius: 12px; }
+        .summary-badge { background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; font-weight: bold; color: #2e7d32; }
+    </style>
+</head>
+<body onload="init()">
+
+<div class="nav no-print">
+    <div class="nav-item" onclick="showPage('billing')"><span class="material-icons">add_shopping_cart</span><br>Billing</div>
+    <div class="nav-item" onclick="showPage('items')"><span class="material-icons">inventory</span><br>Items</div>
+    <div class="nav-item" onclick="showPage('reports')"><span class="material-icons">history</span><br>Reports</div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="material-icons">settings</span><br>Settings</div>
+</div>
+
+<div class="container no-print">
+    <div id="billing" class="page">
+        <div class="card" id="custCard">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                <input type="text" id="cName" placeholder="Customer Name">
+                <input type="number" id="cMob" placeholder="Contact No">
+            </div>
+        </div>
+        <div class="card" style="overflow-x: auto;">
+            <b>Bill: #<span id="bNo"></span></b>
+            <table id="bTable">
+                <thead><tr><th style="width:40%">Item</th><th>Qty</th><th>Rate</th><th>Total</th><th></th></tr></thead>
+                <tbody id="bBody"></tbody>
+            </table>
+            <button class="btn" style="background:var(--s)" onclick="addRow()">+ Add Item</button>
+        </div>
+        <div class="card">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px">
+                <div>Discount (%) <input type="number" id="dPer" oninput="calcTotal('per')"></div>
+                <div>Discount (₹) <input type="number" id="dRs" oninput="calcTotal('rs')"></div>
+            </div>
+            <h2 style="margin: 10px 0;">Total: ₹ <span id="gTotal">0</span></h2>
+            <div style="display:flex; gap:10px">
+                <button class="btn btn-save" style="flex:1" onclick="saveBill(true)">SAVE & PREVIEW</button>
+                <button class="btn" style="background:#607d8b; flex:1" onclick="saveBill(false)">SAVE & NEW</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="items" class="page" style="display:none">
+        <div class="card">
+            <h3 id="itemTitle">Add New Item</h3>
+            <input id="miName" placeholder="Item Name" style="margin-bottom:8px">
+            <div style="display:flex; gap:5px">
+                <input id="miUnit" placeholder="Unit (e.g. Kg, Pc)">
+                <input id="miRate" placeholder="Rate" type="number">
+            </div>
+            <button class="btn btn-save" style="margin-top:10px" id="itemBtn" onclick="addItem()">Save Item</button>
+            <button class="btn" id="cancelEdit" style="display:none; background:#999; margin-top:10px" onclick="resetItemForm()">Cancel</button>
+        </div>
+        <div class="card">
+            <table id="mTable"><thead><tr><th>Name</th><th>Unit</th><th>Rate</th><th>Action</th></tr></thead><tbody id="mBody"></tbody></table>
+        </div>
+    </div>
+
+    <div id="reports" class="page" style="display:none">
+        <div id="dailySummary" class="summary-badge"></div>
+        <div class="card"><h3>Recent Bills</h3><div id="rData"></div></div>
+    </div>
+
+    <div id="settings" class="page" style="display:none">
+        <div class="card">
+            <h3>Shop Settings</h3>
+            <input id="sName" placeholder="Shop Name">
+            <input id="sAddr" placeholder="Address" style="margin:8px 0">
+            <input id="sMob" placeholder="Mobile">
+            <input id="sFoot" placeholder="Bill Footer Message" style="margin-top:8px">
+            <div style="margin-top:10px">
+                <label><input type="checkbox" id="checkCust" onchange="toggleCustField()"> Show Customer Details</label>
+            </div>
+            <button class="btn btn-save" style="margin-top:10px" onclick="saveSet()">Update Settings</button>
+        </div>
+        <div class="card">
+            <h3>Backup & Restore</h3>
+            <button class="btn" style="background:#455a64; margin-bottom:10px" onclick="downloadBackup()">Download Backup</button>
+            <label class="btn" style="background:#546e7a">Restore Backup<input type="file" style="display:none" onchange="restoreData(this)"></label>
+        </div>
+    </div>
+</div>
+
+<div id="billModal" class="modal no-print">
+    <div class="modal-content">
+        <div id="previewArea" style="background:white; padding:10px"></div>
+        <hr>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+            <button class="btn btn-print" onclick="window.print()">Print</button>
+            <button class="btn" style="background:#f57c00" onclick="downloadPDF()">PDF</button>
+            <button class="btn" style="background:#00bfa5" onclick="downloadImage()">Image (WA)</button>
+            <button class="btn btn-del" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="thermal-bill"></div>
+<datalist id="iList"></datalist>
+
+<script>
+    let inv = JSON.parse(localStorage.getItem('k_inv') || '[]');
+    let sales = JSON.parse(localStorage.getItem('k_sales') || '[]');
+    let set = JSON.parse(localStorage.getItem('k_set') || '{"name":"KADAM ENTERPRISES","addr":"SANGLI","mob":"0000","foot":"Thank You!","cust":true}');
+    let currentEditId = null, itemEditIndex = null;
+
+    function init() {
+        document.getElementById('bNo').innerText = sales.length + 1;
+        document.getElementById('sName').value = set.name;
+        document.getElementById('sAddr').value = set.addr;
+        document.getElementById('sMob').value = set.mob;
+        document.getElementById('sFoot').value = set.foot;
+        document.getElementById('checkCust').checked = set.cust;
+        toggleCustField();
+        renderInv();
+        addRow();
+    }
+
+    function showPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.style.display='none');
+        document.getElementById(p).style.display='block';
+        if(p==='reports') renderReports();
+    }
+
+    function toggleCustField() {
+        document.getElementById('custCard').style.display = document.getElementById('checkCust').checked ? 'block' : 'none';
+    }
+
+    function addRow(item='', qty=1, rate='', total=0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input list="iList" value="${item}" onchange="autoFill(this)"></td>
+            <td><input type="number" class="q" value="${qty}" oninput="calcTotal()"></td>
+            <td><input type="number" class="r" value="${rate}" oninput="calcTotal()"></td>
+            <td class="t">${total}</td>
+            <td><button class="btn btn-del" onclick="this.parentElement.parentElement.remove();calcTotal()">X</button></td>
+        `;
+        document.getElementById('bBody').appendChild(tr);
+    }
+
+    function autoFill(el) {
+        let itm = inv.find(i => i.name === el.value);
+        if(itm) {
+            let row = el.parentElement.parentElement;
+            row.querySelector('.r').value = itm.rate;
+            calcTotal();
+            row.querySelector('.q').focus();
+        }
+    }
+
+    function calcTotal(type) {
+        let sub = 0;
+        document.querySelectorAll('#bBody tr').forEach(row => {
+            let q = row.querySelector('.q').value || 0, r = row.querySelector('.r').value || 0;
+            let t = q * r; row.querySelector('.t').innerText = t.toFixed(2); sub += t;
+        });
+        let dp = document.getElementById('dPer'), dr = document.getElementById('dRs');
+        if(type==='per' && sub > 0) dr.value = (sub*(dp.value/100)).toFixed(2);
+        if(type==='rs' && sub > 0) dp.value = ((dr.value/sub)*100).toFixed(1);
+        document.getElementById('gTotal').innerText = (sub - (dr.value || 0)).toFixed(2);
+    }
+
+    function saveBill(preview) {
+        let bItems = [];
+        document.querySelectorAll('#bBody tr').forEach(row => {
+            let n = row.querySelector('input').value;
+            if(n) {
+                let itm = inv.find(i => i.name === n);
+                // युनिट पूर्णपणे सेव्ह करणे (उदा. Kg)
+                bItems.push({ name: n, qty: row.querySelector('.q').value, rate: row.querySelector('.r').value, unit: itm ? itm.unit : '' });
+            }
+        });
+        if(bItems.length === 0) return;
+        let bill = { id: currentEditId || sales.length + 1, date: new Date().toLocaleString(), iso: new Date().toISOString().split('T')[0], cust: document.getElementById('cName').value || 'Cash', mob: document.getElementById('cMob').value || '', items: bItems, disc: document.getElementById('dRs').value || 0, total: document.getElementById('gTotal').innerText };
+        if(currentEditId) sales[sales.findIndex(s => s.id === currentEditId)] = bill; else sales.push(bill);
+        localStorage.setItem('k_sales', JSON.stringify(sales));
+        if(preview) showPreview(bill); else location.reload();
+    }
+
+    function showPreview(bill) {
+        let h = `<center><h2 style="margin:0">${set.name}</h2><p style="margin:5px">${set.addr}<br>Mo: ${set.mob}</p></center>
+        <hr style="border-top:1px dashed #000">Bill: #${bill.id} | Date: ${bill.date.split(',')[0]}<br>${set.cust ? 'Cust: '+bill.cust+' | '+bill.mob : ''}<hr style="border-top:1px dashed #000">
+        <table style="font-size:11px"><thead><tr><th>Sr</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead><tbody>`;
+        bill.items.forEach((i, idx) => { 
+            // युनिट नावापुढे दाखवणे
+            h += `<tr><td>${idx+1}</td><td>${i.name} ${i.unit ? '('+i.unit+')' : ''}</td><td>${i.qty}</td><td>${i.rate}</td><td>${(i.qty*i.rate).toFixed(2)}</td></tr>`; 
+        });
+        h += `</tbody></table><hr style="border-top:1px dashed #000"><div style="text-align:right">Disc: ₹${bill.disc}<br><b style="font-size:14px">Total: ₹${bill.total}</b></div><center><p>${set.foot}</p></center>`;
+        document.getElementById('previewArea').innerHTML = h;
+        document.getElementById('thermal-bill').innerHTML = h;
+        document.getElementById('billModal').style.display = 'block';
+    }
+
+    function renderReports() {
+        let today = new Date().toISOString().split('T')[0];
+        let todaySales = sales.filter(s => s.iso === today);
+        let todayTotal = todaySales.reduce((sum, s) => sum + parseFloat(s.total), 0);
+        document.getElementById('dailySummary').innerHTML = `<span>आजची विक्री:</span><span>₹ ${todayTotal.toFixed(2)}</span>`;
+        let h = "<table><tr><th>#</th><th>Date</th><th>Total</th><th>Edit</th></tr>";
+        sales.slice().reverse().forEach(s => { h += `<tr><td>${s.id}</td><td>${s.date.split(',')[0]}</td><td>₹${s.total}</td><td><button class="btn btn-print" style="padding:5px" onclick='editBill(${s.id})'>Edit</button></td></tr>`; });
+        document.getElementById('rData').innerHTML = h + "</table>";
+    }
+
+    function editBill(id) { 
+        let s = sales.find(x => x.id === id); currentEditId = id; 
+        document.getElementById('cName').value = s.cust; document.getElementById('cMob').value = s.mob;
+        document.getElementById('bBody').innerHTML = ''; s.items.forEach(i => addRow(i.name, i.qty, i.rate, (i.qty*i.rate).toFixed(2)));
+        calcTotal('rs'); showPage('billing'); 
+    }
+
+    function downloadPDF() { html2pdf().from(document.getElementById('previewArea')).set({ margin: 10, filename: 'Bill.pdf', html2canvas: { scale: 3 } }).save(); }
+    
+    function downloadImage() {
+        html2canvas(document.getElementById('previewArea')).then(canvas => {
+            let link = document.createElement('a'); link.download = 'Bill.jpg';
+            link.href = canvas.toDataURL("image/jpeg", 0.9); link.click();
+        });
+    }
+
+    function addItem() {
+        let n = document.getElementById('miName').value, u = document.getElementById('miUnit').value, r = document.getElementById('miRate').value;
+        if(n && r) {
+            if(itemEditIndex !== null) inv[itemEditIndex] = {name:n, unit:u, rate:r};
+            else inv.push({name:n, unit:u, rate:r});
+            localStorage.setItem('k_inv', JSON.stringify(inv));
+            resetItemForm(); renderInv();
+        }
+    }
+
+    function editItem(idx) {
+        let i = inv[idx]; itemEditIndex = idx;
+        document.getElementById('miName').value = i.name; document.getElementById('miUnit').value = i.unit; document.getElementById('miRate').value = i.rate;
+        document.getElementById('itemTitle').innerText = "Edit Item"; document.getElementById('itemBtn').innerText = "Update Item";
+        document.getElementById('cancelEdit').style.display = "inline-flex";
+    }
+
+    function resetItemForm() {
+        itemEditIndex = null; document.getElementById('miName').value=''; document.getElementById('miUnit').value=''; document.getElementById('miRate').value='';
+        document.getElementById('itemTitle').innerText = "Add New Item"; document.getElementById('itemBtn').innerText = "Save Item";
+        document.getElementById('cancelEdit').style.display = "none";
+    }
+
+    function renderInv() {
+        const mb = document.getElementById('mBody'); mb.innerHTML = '';
+        document.getElementById('iList').innerHTML = '';
+        inv.forEach((i, idx) => {
+            document.getElementById('iList').innerHTML += `<option value="${i.name}">`;
+            mb.innerHTML += `<tr><td>${i.name}</td><td>${i.unit}</td><td>${i.rate}</td>
+            <td><button class="btn btn-print" style="padding:4px" onclick="editItem(${idx})">Edit</button>
+            <button class="btn btn-del" onclick="delInv(${idx})">X</button></td></tr>`;
+        });
+    }
+
+    function delInv(idx) { if(confirm("Delete?")) { inv.splice(idx,1); localStorage.setItem('k_inv', JSON.stringify(inv)); renderInv(); } }
+    
+    function saveSet() {
+        set = { name: document.getElementById('sName').value, addr: document.getElementById('sAddr').value, mob: document.getElementById('sMob').value, foot: document.getElementById('sFoot').value, cust: document.getElementById('checkCust').checked };
+        localStorage.setItem('k_set', JSON.stringify(set)); alert("Settings Saved!");
+    }
+
+    function downloadBackup() {
+        let data = JSON.stringify({inv, sales, set});
+        let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], {type: "application/json"}));
+        a.download = `backup_${new Date().toLocaleDateString()}.json`; a.click();
+    }
+
+    function restoreData(input) {
+        let reader = new FileReader(); reader.onload = function() {
+            let data = JSON.parse(reader.result);
+            localStorage.setItem('k_inv', JSON.stringify(data.inv)); localStorage.setItem('k_sales', JSON.stringify(data.sales));
+            localStorage.setItem('k_set', JSON.stringify(data.set)); location.reload();
+        }; reader.readAsText(input.files[0]);
+    }
+    function closeModal() { document.getElementById('billModal').style.display='none'; location.reload(); }
+</script>
+</body>
+</html>
