@@ -5,121 +5,650 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kadam Enterprises - POS V2.3</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --p: #1a237e; --s: #303f9f; --acc: #ffd600; --bg: #f0f2f5; --success: #2e7d32; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
-        .nav { background: var(--p); color: white; display: flex; justify-content: space-around; padding: 12px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .nav-item { cursor: pointer; text-align: center; font-size: 11px; }
-        .container { padding: 12px; max-width: 800px; margin: auto; padding-bottom: 80px; }
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; background: white; }
-        th, td { border: 1px solid #eee; padding: 8px; text-align: left; font-size: 13px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        :root {
+            --p: #0f172a;
+            --s: #1e293b;
+            --acc: #f59e0b;
+            --acc2: #06b6d4;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --radius: 14px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+            --shadow-lg: 0 4px 24px rgba(0,0,0,0.10);
+        }
 
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
-        .btn-save { background: var(--success); } .btn-print { background: #0288d1; } .btn-del { background: #d32f2f; padding: 5px; }
-        
-        #thermal-bill { width: 80mm; padding: 4mm; background: white; font-family: 'Courier New', monospace; font-size: 12px; color: black; display: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            background: var(--p);
+            display: flex;
+            justify-content: space-around;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+        }
+
+        .nav-item {
+            cursor: pointer;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 12px 8px 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            position: relative;
+        }
+
+        .nav-item:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
+
+        .nav-item .material-icons { font-size: 20px; }
+
+        /* ── LAYOUT ── */
+        .container {
+            padding: 16px;
+            max-width: 820px;
+            margin: auto;
+            padding-bottom: 24px;
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 18px 20px;
+            background: var(--p);
+            border-radius: var(--radius);
+            color: white;
+        }
+
+        .page-header .material-icons { font-size: 22px; color: var(--acc); }
+        .page-header h2 { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+        .page-header span.sub { font-size: 11px; color: #94a3b8; margin-left: auto; font-family: 'DM Mono', monospace; }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fafbfc;
+        }
+
+        .card-header .material-icons { font-size: 16px; color: var(--muted); }
+        .card-header span { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+        .card-header .badge { margin-left: auto; background: var(--p); color: var(--acc); font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+
+        .card-body { padding: 18px; }
+
+        /* ── INPUTS ── */
+        .field-group {
+            display: grid;
+            gap: 10px;
+        }
+
+        .field-group.cols-2 { grid-template-columns: 1fr 1fr; }
+        .field-group.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px;
+            color: var(--text);
+            background: white;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--acc2);
+            box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+        }
+
+        input::placeholder { color: #c0ccd8; }
+
+        /* ── TABLE ── */
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 13px;
+        }
+
+        thead tr {
+            background: #f1f5f9;
+        }
+
+        th {
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #fafbfd; }
+
+        td input {
+            padding: 7px 10px;
+            font-size: 13px;
+            border-radius: 6px;
+            border-color: #e8edf2;
+        }
+
+        .total-cell {
+            font-family: 'DM Mono', monospace;
+            font-weight: 600;
+            color: var(--p);
+            font-size: 13px;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.03em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-save { background: var(--success); }
+        .btn-print { background: var(--info); }
+        .btn-del { background: var(--danger); padding: 6px 10px; font-size: 11px; }
+        .btn-accent { background: var(--acc); color: var(--p); }
+        .btn-dark { background: var(--p); }
+        .btn-muted { background: #64748b; }
+        .btn-add { background: #e8f5ff; color: var(--info); border: 1.5px dashed var(--info); font-weight: 600; }
+        .btn-add:hover { background: var(--info); color: white; }
+
+        /* ── TOTAL SECTION ── */
+        .total-section {
+            background: linear-gradient(135deg, var(--p), #1e3a5f);
+            border-radius: 12px;
+            padding: 18px 20px;
+            color: white;
+            margin-bottom: 14px;
+        }
+
+        .total-section .disc-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .total-section .disc-row label { font-size: 11px; font-weight: 600; color: #94a3b8; letter-spacing: 0.04em; display: block; margin-bottom: 5px; }
+        .total-section input { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); color: white; }
+        .total-section input::placeholder { color: rgba(255,255,255,0.3); }
+        .total-section input:focus { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
+
+        .grand-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .grand-total .label { font-size: 12px; font-weight: 600; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; }
+        .grand-total .amount { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500; color: var(--acc); letter-spacing: -0.02em; }
+
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* ── SUMMARY BADGE ── */
+        .summary-badge {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #a7f3d0;
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-badge .s-label { font-size: 12px; font-weight: 700; color: #065f46; letter-spacing: 0.02em; }
+        .summary-badge .s-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: #047857; }
+
+        /* ── MODAL ── */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.75);
+            backdrop-filter: blur(4px);
+            display: none; z-index: 2000; overflow-y: auto;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 0 auto;
+            max-width: 400px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: var(--p);
+            padding: 16px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-header .material-icons { color: var(--acc); }
+        .modal-header h3 { font-size: 14px; font-weight: 700; }
+
+        #previewArea {
+            padding: 16px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            background: white;
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── REPORTS TABLE ── */
+        #rData table { border-radius: 0; }
+        #rData td:last-child, #rData th:last-child { text-align: center; }
+
+        /* ── SETTINGS ── */
+        .settings-section { margin-bottom: 6px; }
+        .settings-section label { font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .settings-section input[type="checkbox"] { width: auto; cursor: pointer; accent-color: var(--acc2); }
+
+        /* ── THERMAL BILL ── */
+        #thermal-bill {
+            width: 80mm; padding: 4mm;
+            background: white;
+            font-family: 'Courier New', monospace;
+            font-size: 12px; color: black; display: none;
+        }
         #thermal-bill table { border: none; width: 100% !important; }
-        #thermal-bill th, #thermal-bill td { border-bottom: 1px dashed #ccc; padding: 4px 0; border:none; }
+        #thermal-bill th, #thermal-bill td { border-bottom: 1px dashed #ccc; padding: 4px 0; border: none; }
 
-        @media print { .no-print { display: none !important; } #thermal-bill { display: block !important; width: 80mm; position: absolute; left: 0; top: 0; } }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 2000; overflow-y: auto; }
-        .modal-content { background: white; margin: 15px auto; padding: 15px; width: 90%; max-width: 380px; border-radius: 12px; }
-        .summary-badge { background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; font-weight: bold; color: #2e7d32; }
+        @media print {
+            .no-print { display: none !important; }
+            #thermal-bill { display: block !important; width: 80mm; position: absolute; left: 0; top: 0; }
+        }
+
+        @media (max-width: 480px) {
+            .field-group.cols-2 { grid-template-columns: 1fr; }
+            .action-row { grid-template-columns: 1fr; }
+            .total-section .disc-row { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body onload="init()">
 
 <div class="nav no-print">
-    <div class="nav-item" onclick="showPage('billing')"><span class="material-icons">add_shopping_cart</span><br>Billing</div>
-    <div class="nav-item" onclick="showPage('items')"><span class="material-icons">inventory</span><br>Items</div>
-    <div class="nav-item" onclick="showPage('reports')"><span class="material-icons">history</span><br>Reports</div>
-    <div class="nav-item" onclick="showPage('settings')"><span class="material-icons">settings</span><br>Settings</div>
+    <div class="nav-item" onclick="showPage('billing')">
+        <span class="material-icons">add_shopping_cart</span>
+        Billing
+    </div>
+    <div class="nav-item" onclick="showPage('items')">
+        <span class="material-icons">inventory_2</span>
+        Items
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+        <span class="material-icons">receipt_long</span>
+        Reports
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+        <span class="material-icons">tune</span>
+        Settings
+    </div>
 </div>
 
 <div class="container no-print">
+
+    <!-- ─── BILLING PAGE ─── -->
     <div id="billing" class="page">
+
+        <div class="page-header">
+            <span class="material-icons">add_shopping_cart</span>
+            <h2>New Bill</h2>
+            <span class="sub">Bill #<span id="bNo"></span></span>
+        </div>
+
         <div class="card" id="custCard">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-                <input type="text" id="cName" placeholder="Customer Name">
-                <input type="number" id="cMob" placeholder="Contact No">
+            <div class="card-header">
+                <span class="material-icons">person_outline</span>
+                <span>Customer Details</span>
+            </div>
+            <div class="card-body">
+                <div class="field-group cols-2">
+                    <div class="field">
+                        <label>Customer Name</label>
+                        <input type="text" id="cName" placeholder="Enter name or Cash">
+                    </div>
+                    <div class="field">
+                        <label>Contact Number</label>
+                        <input type="number" id="cMob" placeholder="Mobile number">
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="card" style="overflow-x: auto;">
-            <b>Bill: #<span id="bNo"></span></b>
-            <table id="bTable">
-                <thead><tr><th style="width:40%">Item</th><th>Qty</th><th>Rate</th><th>Total</th><th></th></tr></thead>
-                <tbody id="bBody"></tbody>
-            </table>
-            <button class="btn" style="background:var(--s)" onclick="addRow()">+ Add Item</button>
-        </div>
+
         <div class="card">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px">
-                <div>Discount (%) <input type="number" id="dPer" oninput="calcTotal('per')"></div>
-                <div>Discount (₹) <input type="number" id="dRs" oninput="calcTotal('rs')"></div>
+            <div class="card-header">
+                <span class="material-icons">shopping_basket</span>
+                <span>Bill Items</span>
+                <span class="badge">#<span id="bNo2"></span></span>
             </div>
-            <h2 style="margin: 10px 0;">Total: ₹ <span id="gTotal">0</span></h2>
-            <div style="display:flex; gap:10px">
-                <button class="btn btn-save" style="flex:1" onclick="saveBill(true)">SAVE & PREVIEW</button>
-                <button class="btn" style="background:#607d8b; flex:1" onclick="saveBill(false)">SAVE & NEW</button>
+            <div class="table-wrap">
+                <table id="bTable">
+                    <thead>
+                        <tr>
+                            <th style="width:38%">Item</th>
+                            <th style="width:16%">Qty</th>
+                            <th style="width:20%">Rate ₹</th>
+                            <th style="width:18%">Amount</th>
+                            <th style="width:8%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="bBody"></tbody>
+                </table>
             </div>
+            <div style="padding: 12px 16px; border-top: 1px solid var(--border);">
+                <button class="btn btn-add" onclick="addRow()">
+                    <span class="material-icons" style="font-size:15px">add</span>
+                    Add Item
+                </button>
+            </div>
+        </div>
+
+        <div class="total-section">
+            <div class="disc-row">
+                <div>
+                    <label>Discount (%)</label>
+                    <input type="number" id="dPer" placeholder="0" oninput="calcTotal('per')">
+                </div>
+                <div>
+                    <label>Discount (₹)</label>
+                    <input type="number" id="dRs" placeholder="0.00" oninput="calcTotal('rs')">
+                </div>
+            </div>
+            <div class="grand-total">
+                <div>
+                    <div class="label">Grand Total</div>
+                </div>
+                <div class="amount">₹ <span id="gTotal">0.00</span></div>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button class="btn btn-save" style="padding:13px" onclick="saveBill(true)">
+                <span class="material-icons" style="font-size:16px">visibility</span>
+                Save & Preview
+            </button>
+            <button class="btn btn-muted" style="padding:13px" onclick="saveBill(false)">
+                <span class="material-icons" style="font-size:16px">add_circle_outline</span>
+                Save & New
+            </button>
         </div>
     </div>
 
+    <!-- ─── ITEMS PAGE ─── -->
     <div id="items" class="page" style="display:none">
-        <div class="card">
-            <h3 id="itemTitle">Add New Item</h3>
-            <input id="miName" placeholder="Item Name" style="margin-bottom:8px">
-            <div style="display:flex; gap:5px">
-                <input id="miUnit" placeholder="Unit (e.g. Kg, Pc)">
-                <input id="miRate" placeholder="Rate" type="number">
-            </div>
-            <button class="btn btn-save" style="margin-top:10px" id="itemBtn" onclick="addItem()">Save Item</button>
-            <button class="btn" id="cancelEdit" style="display:none; background:#999; margin-top:10px" onclick="resetItemForm()">Cancel</button>
+
+        <div class="page-header">
+            <span class="material-icons">inventory_2</span>
+            <h2>Item Master</h2>
         </div>
+
         <div class="card">
-            <table id="mTable"><thead><tr><th>Name</th><th>Unit</th><th>Rate</th><th>Action</th></tr></thead><tbody id="mBody"></tbody></table>
+            <div class="card-header">
+                <span class="material-icons">add_box</span>
+                <span id="itemTitle">Add New Item</span>
+            </div>
+            <div class="card-body">
+                <div class="field-group" style="margin-bottom:10px">
+                    <div class="field">
+                        <label>Item Name</label>
+                        <input id="miName" placeholder="Enter item name">
+                    </div>
+                </div>
+                <div class="field-group cols-2" style="margin-bottom:14px">
+                    <div class="field">
+                        <label>Unit</label>
+                        <input id="miUnit" placeholder="Kg, Pc, Ltr…">
+                    </div>
+                    <div class="field">
+                        <label>Rate (₹)</label>
+                        <input id="miRate" placeholder="0.00" type="number">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px">
+                    <button class="btn btn-save" id="itemBtn" onclick="addItem()">
+                        <span class="material-icons" style="font-size:15px">save</span>
+                        <span>Save Item</span>
+                    </button>
+                    <button class="btn btn-muted" id="cancelEdit" style="display:none" onclick="resetItemForm()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="material-icons">list_alt</span>
+                <span>All Items</span>
+            </div>
+            <div class="table-wrap">
+                <table id="mTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Unit</th>
+                            <th>Rate ₹</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
+    <!-- ─── REPORTS PAGE ─── -->
     <div id="reports" class="page" style="display:none">
+
+        <div class="page-header">
+            <span class="material-icons">receipt_long</span>
+            <h2>Sales Reports</h2>
+        </div>
+
         <div id="dailySummary" class="summary-badge"></div>
-        <div class="card"><h3>Recent Bills</h3><div id="rData"></div></div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="material-icons">history</span>
+                <span>Recent Bills</span>
+            </div>
+            <div id="rData"></div>
+        </div>
     </div>
 
+    <!-- ─── SETTINGS PAGE ─── -->
     <div id="settings" class="page" style="display:none">
-        <div class="card">
-            <h3>Shop Settings</h3>
-            <input id="sName" placeholder="Shop Name">
-            <input id="sAddr" placeholder="Address" style="margin:8px 0">
-            <input id="sMob" placeholder="Mobile">
-            <input id="sFoot" placeholder="Bill Footer Message" style="margin-top:8px">
-            <div style="margin-top:10px">
-                <label><input type="checkbox" id="checkCust" onchange="toggleCustField()"> Show Customer Details</label>
-            </div>
-            <button class="btn btn-save" style="margin-top:10px" onclick="saveSet()">Update Settings</button>
+
+        <div class="page-header">
+            <span class="material-icons">tune</span>
+            <h2>Settings</h2>
         </div>
+
         <div class="card">
-            <h3>Backup & Restore</h3>
-            <button class="btn" style="background:#455a64; margin-bottom:10px" onclick="downloadBackup()">Download Backup</button>
-            <label class="btn" style="background:#546e7a">Restore Backup<input type="file" style="display:none" onchange="restoreData(this)"></label>
+            <div class="card-header">
+                <span class="material-icons">store</span>
+                <span>Shop Information</span>
+            </div>
+            <div class="card-body">
+                <div class="field-group" style="gap:10px">
+                    <div class="field">
+                        <label>Shop Name</label>
+                        <input id="sName" placeholder="Your shop name">
+                    </div>
+                    <div class="field">
+                        <label>Address</label>
+                        <input id="sAddr" placeholder="Full address">
+                    </div>
+                    <div class="field">
+                        <label>Mobile</label>
+                        <input id="sMob" placeholder="Contact number">
+                    </div>
+                    <div class="field">
+                        <label>Bill Footer Message</label>
+                        <input id="sFoot" placeholder="e.g. Thank You! Visit Again">
+                    </div>
+                    <div class="settings-section">
+                        <label>
+                            <input type="checkbox" id="checkCust" onchange="toggleCustField()">
+                            Show Customer Details on Bill
+                        </label>
+                    </div>
+                </div>
+                <button class="btn btn-save" style="margin-top:16px" onclick="saveSet()">
+                    <span class="material-icons" style="font-size:15px">save</span>
+                    Save Settings
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="material-icons">cloud_sync</span>
+                <span>Backup & Restore</span>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; gap:10px; flex-wrap:wrap">
+                    <button class="btn btn-dark" onclick="downloadBackup()">
+                        <span class="material-icons" style="font-size:15px">download</span>
+                        Download Backup
+                    </button>
+                    <label class="btn btn-muted" style="cursor:pointer">
+                        <span class="material-icons" style="font-size:15px">upload</span>
+                        Restore Backup
+                        <input type="file" style="display:none" onchange="restoreData(this)">
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ─── BILL MODAL ─── -->
 <div id="billModal" class="modal no-print">
     <div class="modal-content">
-        <div id="previewArea" style="background:white; padding:10px"></div>
-        <hr>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <button class="btn btn-print" onclick="window.print()">Print</button>
-            <button class="btn" style="background:#f57c00" onclick="downloadPDF()">PDF</button>
-            <button class="btn" style="background:#00bfa5" onclick="downloadImage()">Image (WA)</button>
-            <button class="btn btn-del" onclick="closeModal()">Close</button>
+        <div class="modal-header">
+            <span class="material-icons">receipt</span>
+            <h3>Bill Preview</h3>
+        </div>
+        <div id="previewArea"></div>
+        <div class="modal-actions">
+            <button class="btn btn-print" onclick="window.print()">
+                <span class="material-icons" style="font-size:15px">print</span> Print
+            </button>
+            <button class="btn" style="background:#f97316" onclick="downloadPDF()">
+                <span class="material-icons" style="font-size:15px">picture_as_pdf</span> PDF
+            </button>
+            <button class="btn" style="background:#059669; grid-column: span 1" onclick="downloadImage()">
+                <span class="material-icons" style="font-size:15px">image</span> Image (WA)
+            </button>
+            <button class="btn btn-del" onclick="closeModal()">
+                <span class="material-icons" style="font-size:15px">close</span> Close
+            </button>
         </div>
     </div>
 </div>
@@ -131,10 +660,13 @@
     let inv = JSON.parse(localStorage.getItem('k_inv') || '[]');
     let sales = JSON.parse(localStorage.getItem('k_sales') || '[]');
     let set = JSON.parse(localStorage.getItem('k_set') || '{"name":"KADAM ENTERPRISES","addr":"SANGLI","mob":"0000","foot":"Thank You!","cust":true}');
-    let currentEditId = null, itemEditIndex = null;
+    let currentEditId = null, itemEditIndex = null, _currentBill = null;
 
     function init() {
-        document.getElementById('bNo').innerText = sales.length + 1;
+        let billNum = sales.length + 1;
+        document.getElementById('bNo').innerText = billNum;
+        let bNo2el = document.getElementById('bNo2');
+        if(bNo2el) bNo2el.innerText = billNum;
         document.getElementById('sName').value = set.name;
         document.getElementById('sAddr').value = set.addr;
         document.getElementById('sMob').value = set.mob;
@@ -158,11 +690,11 @@
     function addRow(item='', qty=1, rate='', total=0) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input list="iList" value="${item}" onchange="autoFill(this)"></td>
-            <td><input type="number" class="q" value="${qty}" oninput="calcTotal()"></td>
-            <td><input type="number" class="r" value="${rate}" oninput="calcTotal()"></td>
-            <td class="t">${total}</td>
-            <td><button class="btn btn-del" onclick="this.parentElement.parentElement.remove();calcTotal()">X</button></td>
+            <td><input list="iList" value="${item}" onchange="autoFill(this)" placeholder="Select or type item"></td>
+            <td><input type="number" class="q" value="${qty}" oninput="calcTotal()" style="text-align:center"></td>
+            <td><input type="number" class="r" value="${rate}" oninput="calcTotal()" placeholder="0.00"></td>
+            <td class="t total-cell">${total || ''}</td>
+            <td><button class="btn btn-del" onclick="this.parentElement.parentElement.remove();calcTotal()" title="Remove"><span class="material-icons" style="font-size:13px">close</span></button></td>
         `;
         document.getElementById('bBody').appendChild(tr);
     }
@@ -180,41 +712,65 @@
     function calcTotal(type) {
         let sub = 0;
         document.querySelectorAll('#bBody tr').forEach(row => {
-            let q = row.querySelector('.q').value || 0, r = row.querySelector('.r').value || 0;
-            let t = q * r; row.querySelector('.t').innerText = t.toFixed(2); sub += t;
+            let q = parseFloat(row.querySelector('.q').value) || 0;
+            let r = parseFloat(row.querySelector('.r').value) || 0;
+            let t = q * r;
+            row.querySelector('.t').innerText = t > 0 ? '₹' + t.toFixed(2) : '';
+            sub += t;
         });
         let dp = document.getElementById('dPer'), dr = document.getElementById('dRs');
-        if(type==='per' && sub > 0) dr.value = (sub*(dp.value/100)).toFixed(2);
-        if(type==='rs' && sub > 0) dp.value = ((dr.value/sub)*100).toFixed(1);
-        document.getElementById('gTotal').innerText = (sub - (dr.value || 0)).toFixed(2);
+        let discRs = parseFloat(dr.value) || 0;
+        let discPer = parseFloat(dp.value) || 0;
+        if(type==='per' && sub > 0) { discRs = sub * (discPer / 100); dr.value = discRs.toFixed(2); }
+        if(type==='rs' && sub > 0) { discPer = (discRs / sub) * 100; dp.value = discPer.toFixed(1); }
+        let finalTotal = sub - (parseFloat(dr.value) || 0);
+        document.getElementById('gTotal').innerText = finalTotal.toFixed(2);
     }
 
     function saveBill(preview) {
         let bItems = [];
         document.querySelectorAll('#bBody tr').forEach(row => {
-            let n = row.querySelector('input').value;
+            let n = row.querySelector('input').value.trim();
             if(n) {
                 let itm = inv.find(i => i.name === n);
-                // युनिट पूर्णपणे सेव्ह करणे (उदा. Kg)
-                bItems.push({ name: n, qty: row.querySelector('.q').value, rate: row.querySelector('.r').value, unit: itm ? itm.unit : '' });
+                let q = parseFloat(row.querySelector('.q').value) || 0;
+                let r = parseFloat(row.querySelector('.r').value) || 0;
+                bItems.push({ name: n, qty: q, rate: r, unit: itm ? itm.unit : '' });
             }
         });
-        if(bItems.length === 0) return;
-        let bill = { id: currentEditId || sales.length + 1, date: new Date().toLocaleString(), iso: new Date().toISOString().split('T')[0], cust: document.getElementById('cName').value || 'Cash', mob: document.getElementById('cMob').value || '', items: bItems, disc: document.getElementById('dRs').value || 0, total: document.getElementById('gTotal').innerText };
-        if(currentEditId) sales[sales.findIndex(s => s.id === currentEditId)] = bill; else sales.push(bill);
+        if(bItems.length === 0) return alert('Please add at least one item.');
+        let discVal = parseFloat(document.getElementById('dRs').value) || 0;
+        let totalVal = parseFloat(document.getElementById('gTotal').innerText) || 0;
+        let custName = document.getElementById('cName') ? document.getElementById('cName').value.trim() || 'Cash' : 'Cash';
+        let custMob  = document.getElementById('cMob')  ? document.getElementById('cMob').value.trim()  || '' : '';
+        let bill = {
+            id: currentEditId || sales.length + 1,
+            date: new Date().toLocaleString(),
+            iso: new Date().toISOString().split('T')[0],
+            cust: custName,
+            mob: custMob,
+            items: bItems,
+            disc: discVal.toFixed(2),
+            total: totalVal.toFixed(2)
+        };
+        if(currentEditId) sales[sales.findIndex(s => s.id === currentEditId)] = bill;
+        else sales.push(bill);
         localStorage.setItem('k_sales', JSON.stringify(sales));
         if(preview) showPreview(bill); else location.reload();
     }
 
     function showPreview(bill) {
-        let h = `<center><h2 style="margin:0">${set.name}</h2><p style="margin:5px">${set.addr}<br>Mo: ${set.mob}</p></center>
-        <hr style="border-top:1px dashed #000">Bill: #${bill.id} | Date: ${bill.date.split(',')[0]}<br>${set.cust ? 'Cust: '+bill.cust+' | '+bill.mob : ''}<hr style="border-top:1px dashed #000">
-        <table style="font-size:11px"><thead><tr><th>Sr</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead><tbody>`;
-        bill.items.forEach((i, idx) => { 
-            // युनिट नावापुढे दाखवणे
-            h += `<tr><td>${idx+1}</td><td>${i.name} ${i.unit ? '('+i.unit+')' : ''}</td><td>${i.qty}</td><td>${i.rate}</td><td>${(i.qty*i.rate).toFixed(2)}</td></tr>`; 
+        _currentBill = bill;
+        let h = `<center><h2 style="margin:0;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px">${set.name}</h2><p style="margin:4px 0;font-size:11px;color:#555">${set.addr}<br>Mo: ${set.mob}</p></center>
+        <hr style="border:none;border-top:1px dashed #ccc;margin:8px 0">
+        <div style="font-size:11px;margin-bottom:4px"><b>Bill #${bill.id}</b> &nbsp;|&nbsp; ${bill.date.split(',')[0]}</div>
+        ${set.cust ? '<div style="font-size:11px;margin-bottom:4px">Customer: <b>'+bill.cust+'</b> '+bill.mob+'</div>' : ''}
+        <hr style="border:none;border-top:1px dashed #ccc;margin:8px 0">
+        <table style="font-size:11px;font-family:Courier New,monospace;width:100%;border-collapse:collapse"><thead><tr style="border-bottom:1px dashed #ccc"><th style="padding:4px 2px;text-align:left">Sr</th><th style="text-align:left">Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amt</th></tr></thead><tbody>`;
+        bill.items.forEach((i, idx) => {
+            h += `<tr><td style="padding:3px 2px">${idx+1}</td><td>${i.name}${i.unit ? ' ('+i.unit+')' : ''}</td><td style="text-align:right">${i.qty}</td><td style="text-align:right">${parseFloat(i.rate).toFixed(2)}</td><td style="text-align:right">${(parseFloat(i.qty)*parseFloat(i.rate)).toFixed(2)}</td></tr>`;
         });
-        h += `</tbody></table><hr style="border-top:1px dashed #000"><div style="text-align:right">Disc: ₹${bill.disc}<br><b style="font-size:14px">Total: ₹${bill.total}</b></div><center><p>${set.foot}</p></center>`;
+        h += `</tbody></table><hr style="border:none;border-top:1px dashed #ccc;margin:8px 0"><div style="text-align:right;font-size:12px">Discount: ₹${bill.disc}<br><b style="font-size:15px">Total: ₹${bill.total}</b></div><center style="margin-top:10px;font-size:11px;color:#777">${set.foot}</center>`;
         document.getElementById('previewArea').innerHTML = h;
         document.getElementById('thermal-bill').innerHTML = h;
         document.getElementById('billModal').style.display = 'block';
@@ -224,25 +780,47 @@
         let today = new Date().toISOString().split('T')[0];
         let todaySales = sales.filter(s => s.iso === today);
         let todayTotal = todaySales.reduce((sum, s) => sum + parseFloat(s.total), 0);
-        document.getElementById('dailySummary').innerHTML = `<span>आजची विक्री:</span><span>₹ ${todayTotal.toFixed(2)}</span>`;
-        let h = "<table><tr><th>#</th><th>Date</th><th>Total</th><th>Edit</th></tr>";
-        sales.slice().reverse().forEach(s => { h += `<tr><td>${s.id}</td><td>${s.date.split(',')[0]}</td><td>₹${s.total}</td><td><button class="btn btn-print" style="padding:5px" onclick='editBill(${s.id})'>Edit</button></td></tr>`; });
-        document.getElementById('rData').innerHTML = h + "</table>";
+        document.getElementById('dailySummary').innerHTML = `<div><div class="s-label">आजची विक्री (Today's Sales)</div><div style="font-size:11px;color:#059669;margin-top:2px">${todaySales.length} bill${todaySales.length !== 1 ? 's' : ''}</div></div><div class="s-val">₹ ${todayTotal.toFixed(2)}</div>`;
+        let h = "<table><thead><tr><th>#</th><th>Date</th><th>Customer</th><th>Total</th><th>Edit</th></tr></thead><tbody>";
+        sales.slice().reverse().forEach(s => { h += `<tr><td style="font-family:'DM Mono',monospace;color:#64748b">${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}</td><td style="font-family:'DM Mono',monospace;font-weight:600">₹${s.total}</td><td><button class="btn btn-print" style="padding:5px 10px;font-size:11px" onclick='editBill(${s.id})'>Edit</button></td></tr>`; });
+        document.getElementById('rData').innerHTML = h + "</tbody></table>";
     }
 
-    function editBill(id) { 
-        let s = sales.find(x => x.id === id); currentEditId = id; 
+    function editBill(id) {
+        let s = sales.find(x => x.id === id); currentEditId = id;
         document.getElementById('cName').value = s.cust; document.getElementById('cMob').value = s.mob;
         document.getElementById('bBody').innerHTML = ''; s.items.forEach(i => addRow(i.name, i.qty, i.rate, (i.qty*i.rate).toFixed(2)));
-        calcTotal('rs'); showPage('billing'); 
+        calcTotal('rs'); showPage('billing');
     }
 
-    function downloadPDF() { html2pdf().from(document.getElementById('previewArea')).set({ margin: 10, filename: 'Bill.pdf', html2canvas: { scale: 3 } }).save(); }
-    
+    function downloadPDF() {
+        // Clone preview into a clean off-screen container so modal styles don't bleed in
+        let clone = document.createElement('div');
+        clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;background:white;padding:16px;font-family:Courier New,monospace;font-size:12px;color:#000;z-index:-1';
+        clone.innerHTML = document.getElementById('previewArea').innerHTML;
+        document.body.appendChild(clone);
+        let billId = _currentBill ? _currentBill.id : 'bill';
+        html2pdf().from(clone).set({
+            margin: 8,
+            filename: 'Bill_' + billId + '.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 3, backgroundColor: '#ffffff', useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a6', orientation: 'portrait' }
+        }).save().then(() => document.body.removeChild(clone));
+    }
+
     function downloadImage() {
-        html2canvas(document.getElementById('previewArea')).then(canvas => {
-            let link = document.createElement('a'); link.download = 'Bill.jpg';
-            link.href = canvas.toDataURL("image/jpeg", 0.9); link.click();
+        let clone = document.createElement('div');
+        clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;background:white;padding:16px;font-family:Courier New,monospace;font-size:12px;color:#000;z-index:-1';
+        clone.innerHTML = document.getElementById('previewArea').innerHTML;
+        document.body.appendChild(clone);
+        let billId = _currentBill ? _currentBill.id : 'bill';
+        html2canvas(clone, { backgroundColor: '#ffffff', scale: 3, useCORS: true }).then(canvas => {
+            document.body.removeChild(clone);
+            let link = document.createElement('a');
+            link.download = 'Bill_' + billId + '.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
         });
     }
 
@@ -259,13 +837,15 @@
     function editItem(idx) {
         let i = inv[idx]; itemEditIndex = idx;
         document.getElementById('miName').value = i.name; document.getElementById('miUnit').value = i.unit; document.getElementById('miRate').value = i.rate;
-        document.getElementById('itemTitle').innerText = "Edit Item"; document.getElementById('itemBtn').innerText = "Update Item";
+        document.getElementById('itemTitle').innerText = "Edit Item";
+        document.getElementById('itemBtn').innerHTML = '<span class="material-icons" style="font-size:15px">update</span> Update Item';
         document.getElementById('cancelEdit').style.display = "inline-flex";
     }
 
     function resetItemForm() {
         itemEditIndex = null; document.getElementById('miName').value=''; document.getElementById('miUnit').value=''; document.getElementById('miRate').value='';
-        document.getElementById('itemTitle').innerText = "Add New Item"; document.getElementById('itemBtn').innerText = "Save Item";
+        document.getElementById('itemTitle').innerText = "Add New Item";
+        document.getElementById('itemBtn').innerHTML = '<span class="material-icons" style="font-size:15px">save</span> Save Item';
         document.getElementById('cancelEdit').style.display = "none";
     }
 
@@ -274,14 +854,22 @@
         document.getElementById('iList').innerHTML = '';
         inv.forEach((i, idx) => {
             document.getElementById('iList').innerHTML += `<option value="${i.name}">`;
-            mb.innerHTML += `<tr><td>${i.name}</td><td>${i.unit}</td><td>${i.rate}</td>
-            <td><button class="btn btn-print" style="padding:4px" onclick="editItem(${idx})">Edit</button>
-            <button class="btn btn-del" onclick="delInv(${idx})">X</button></td></tr>`;
+            mb.innerHTML += `<tr>
+                <td style="font-weight:600">${i.name}</td>
+                <td><span style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#475569">${i.unit}</span></td>
+                <td style="font-family:'DM Mono',monospace;font-weight:600">₹${i.rate}</td>
+                <td>
+                    <div style="display:flex;gap:5px">
+                        <button class="btn btn-print" style="padding:5px 10px;font-size:11px" onclick="editItem(${idx})">Edit</button>
+                        <button class="btn btn-del" onclick="delInv(${idx})"><span class="material-icons" style="font-size:13px">delete</span></button>
+                    </div>
+                </td>
+            </tr>`;
         });
     }
 
-    function delInv(idx) { if(confirm("Delete?")) { inv.splice(idx,1); localStorage.setItem('k_inv', JSON.stringify(inv)); renderInv(); } }
-    
+    function delInv(idx) { if(confirm("Delete this item?")) { inv.splice(idx,1); localStorage.setItem('k_inv', JSON.stringify(inv)); renderInv(); } }
+
     function saveSet() {
         set = { name: document.getElementById('sName').value, addr: document.getElementById('sAddr').value, mob: document.getElementById('sMob').value, foot: document.getElementById('sFoot').value, cust: document.getElementById('checkCust').checked };
         localStorage.setItem('k_set', JSON.stringify(set)); alert("Settings Saved!");
@@ -300,7 +888,9 @@
             localStorage.setItem('k_set', JSON.stringify(data.set)); location.reload();
         }; reader.readAsText(input.files[0]);
     }
+
     function closeModal() { document.getElementById('billModal').style.display='none'; location.reload(); }
 </script>
 </body>
 </html>
+
